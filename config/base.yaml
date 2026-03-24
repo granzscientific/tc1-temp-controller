@@ -1,0 +1,226 @@
+substitutions:
+  name: gs-tc1
+  friendly_name: "GS TC1 Temperature Controller"
+
+  # See https://esphome.io/components/esphome.html#esphome-creators-project
+  project_name: GranzScientific.TC1-Temperature-Controller
+  project_ver_num: "1.0"
+  project_ver_let: a
+
+  # TC1 specific configuration
+
+esphome:
+  project:
+    name: ${project_name}
+    version: ${project_ver_num}(${project_ver_let})
+  name: ${name}
+  friendly_name: ${friendly_name}
+  platformio_options: # ESP32-C3 SuperMini options
+    board_build.f_flash: 40000000L
+    board_build.flash_mode: dio
+    board_build.flash_size: 4MB
+#  on_boot:
+#    then:
+#      - script.execute: scr_sleep_control
+#      - script.wait: scr_sleep_control
+
+# ESP32 version and framework
+esp32:
+  board: esp32-c3-devkitm-1
+  framework:
+    type: arduino
+
+# https://esphome.io/components/esphome.html#adjusting-flash-writes
+preferences:
+  flash_write_interval: 5min
+
+# Enable logging
+logger:
+  level: DEBUG
+  logs:
+    # Prevent spamming from ntc_power switch
+    switch: INFO
+
+# Enable Home Assistant API
+api:
+  id: gs_api
+  # **** No API encryption key by default.  You should add one in your config!
+
+# https://esphome.io/components/ota.html
+ota:
+  - platform: esphome
+    # **** No OTA password by default.  You should add one in your config!
+    on_error:
+      - button.press: restart_button
+
+wifi:
+  id: wifi_wificomponent_id # For some reason, if any other id name is used this won't compile
+  # Enable fallback access point (captive portal) in case wifi credentials missing
+  ap:
+    ssid: ${friendly_name}
+    password: "12345678"
+    # Disable AP when we have wifi credentials stored in nvmem
+    # Note that, after a factory reset we still have an AP no matter what
+    ap_timeout: 0s
+
+web_server:
+  port: 80
+  local: true # Embed the web server data to allow it work without internet access
+  ota: false  # Disables OTA through regular web interface
+
+# Captive portal automatically enables web server OTA platform
+# OTA will only be accessible when captive portal is active
+captive_portal:
+
+# Enable BLE tracker
+esp32_ble_tracker:
+  scan_parameters:
+    active: true
+
+bluetooth_proxy:
+  active: true
+
+# Factory reset the device if power is cycled 5 times, with less than 5 seconds each time
+# This clears WiFi credentials and allows the device to be setup again
+# https://esphome.io/components/factory_reset/
+factory_reset:
+  resets_required: 5
+  max_delay: 5s
+
+# I2C bus
+i2c:
+  sda: GPIO2
+  scl: GPIO1
+  frequency: 10kHz
+
+# Buttons
+button:
+  # https://esphome.io/components/button/restart.html
+  - platform: restart
+    id: restart_button
+    name: Restart Firmware
+    entity_category: diagnostic
+
+# Configure the PWM outputs to drive the LED and buzzer
+output:
+  - platform: ledc
+    id: led_out
+    pin: GPIO6
+    channel: 4
+
+# Enable the addressable RGB LED on GPIO8
+light:
+  - platform: neopixelbus
+    type: GRB
+    variant: WS2812
+    pin: GPIO8
+    num_leds: 1
+    default_transition_length: 0.1s
+    name: "RGB Indicator"
+    id: indicator_light
+
+# Switches
+switch:
+  # Factory reset switch (clear wifi credentials, etc)
+  - platform: factory_reset
+    name: "Factory Reset"
+  # Switch to power NTC to avoid battery drain when not being read
+  - platform: gpio
+    id: heater_out
+    pin: GPIO21
+    internal: True # Hide from home assistant
+
+# Sensors
+sensor:
+  # WiFi signal strength/RSSI in dB
+  - platform: wifi_signal
+    name: "WiFi Signal dB"
+    id: wifi_signal_db
+    entity_category: "diagnostic"
+    update_interval: 5s
+  #  WiFi signal strength in %
+  - platform: copy
+    source_id: wifi_signal_db
+    name: "WiFi Signal Strength"
+    filters:
+      - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
+    unit_of_measurement: "%"
+    entity_category: "diagnostic"
+    device_class: ""
+  # ESP32 internal temperature sensor
+  - platform: internal_temperature
+    name: "MCU Internal Temperature"
+    entity_category: "diagnostic"
+    update_interval: 5s
+  # BME680 air quality sensor
+  - platform: bme680
+    temperature:
+      name: "BME680 Temperature"
+      oversampling: 16x
+      id: bme680_temperature
+    pressure:
+      name: "BME680 Pressure"
+    humidity:
+      id: bme680_humidity
+      name: "BME680 Humidity"
+    gas_resistance:
+      id: bme680_gas_resistance
+      name: "BME680 Gas Resistance"
+    address: 0x76
+    update_interval: 5s
+  - platform: template
+    name: "BME680 Indoor Air Quality"
+    id: bme680_iaq
+    icon: "mdi:gauge"
+    # calculation: comp_gas = log(R_gas[ohm]) + 0.04 log(Ohm)/%rh * hum[%rh]
+    lambda: |-
+      return log(id(bme680_gas_resistance).state) + 0.04 * id(bme680_humidity).state;
+    state_class: "measurement"
+
+# Text sensors
+text_sensor:
+  - platform: template
+    name: "BME680 IAQ Classification"
+    icon: "mdi:checkbox-marked-circle-outline"
+    lambda: |-
+      if (int(id(bme680_iaq).state) <= 50) {
+        return {"Excellent"};
+      }
+      else if (int(id(bme680_iaq).state) <= 100) {
+        return {"Good"};
+      }
+      else if (int(id(bme680_iaq).state) <= 150) {
+        return {"Lightly polluted"};
+      }
+      else if (int(id(bme680_iaq).state) <= 200) {
+        return {"Moderately polluted"};
+      }
+      else if (int(id(bme680_iaq).state) <= 250) {
+        return {"Heavily polluted"};
+      }
+      else if (int(id(bme680_iaq).state) <= 350) {
+        return {"Severely polluted"};
+      }
+      else if (int(id(bme680_iaq).state) <= 500) {
+        return {"Extremely polluted"};
+      }
+      else {
+        return {"unknown"};
+      }
+
+# Temperature controller
+climate:
+  - platform: thermostat
+    name: "Temperature Controller"
+    sensor: bme680_temperature
+    min_heating_off_time: 300s
+    min_heating_run_time: 300s
+    min_idle_time: 30s
+    heat_action:
+      - switch.turn_on: heater_out
+    idle_action:
+      - switch.turn_off: heater_out
+    default_preset: Chamber
+    preset:
+      - name: Chamber
+        default_target_temperature_low: 20 °C
