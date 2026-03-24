@@ -28,7 +28,7 @@ esphome:
 esp32:
   board: esp32-c3-devkitm-1
   framework:
-    type: arduino
+    type: esp-idf
 
 # https://esphome.io/components/esphome.html#adjusting-flash-writes
 preferences:
@@ -37,9 +37,6 @@ preferences:
 # Enable logging
 logger:
   level: DEBUG
-  logs:
-    # Prevent spamming from ntc_power switch
-    switch: INFO
 
 # Enable Home Assistant API
 api:
@@ -110,21 +107,29 @@ output:
 
 # Enable the addressable RGB LED on GPIO8
 light:
-  - platform: neopixelbus
-    type: GRB
-    variant: WS2812
+  - platform: esp32_rmt_led_strip
+    rgb_order: GRB
     pin: GPIO8
     num_leds: 1
-    default_transition_length: 0.1s
+    chipset: ws2812
     name: "RGB Indicator"
     id: indicator_light
+
+#  - platform: neopixelbus
+#    type: GRB
+#    variant: WS2812
+#    pin: GPIO8
+#    num_leds: 1
+#    default_transition_length: 0.1s
+#    name: "RGB Indicator"
+#    id: indicator_light
 
 # Switches
 switch:
   # Factory reset switch (clear wifi credentials, etc)
   - platform: factory_reset
     name: "Factory Reset"
-  # Switch to power NTC to avoid battery drain when not being read
+  # Heater relay
   - platform: gpio
     id: heater_out
     pin: GPIO21
@@ -213,14 +218,27 @@ climate:
   - platform: thermostat
     name: "Temperature Controller"
     sensor: bme680_temperature
-    min_heating_off_time: 300s
-    min_heating_run_time: 300s
-    min_idle_time: 30s
+    min_heating_off_time: 15s
+    min_heating_run_time: 15s
+    min_idle_time: 15s
     heat_action:
       - switch.turn_on: heater_out
+      - light.turn_on:
+          id: indicator_light
+          brightness: 50%
+          red: 100%
+          green: 0%
+          blue: 0%
     idle_action:
       - switch.turn_off: heater_out
+      - light.turn_on:
+          id: indicator_light
+          brightness: 0%
+          red: 0%
+          green: 0%
+          blue: 0%
     default_preset: Chamber
     preset:
       - name: Chamber
-        default_target_temperature_low: 20 °C
+        mode: heat
+        default_target_temperature_low: 20°C
