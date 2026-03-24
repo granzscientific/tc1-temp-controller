@@ -115,15 +115,6 @@ light:
     name: "RGB Indicator"
     id: indicator_light
 
-#  - platform: neopixelbus
-#    type: GRB
-#    variant: WS2812
-#    pin: GPIO8
-#    num_leds: 1
-#    default_transition_length: 0.1s
-#    name: "RGB Indicator"
-#    id: indicator_light
-
 # Switches
 switch:
   # Factory reset switch (clear wifi credentials, etc)
@@ -133,6 +124,7 @@ switch:
   - platform: gpio
     id: heater_out
     pin: GPIO21
+    inverted: true
     internal: True # Hide from home assistant
 
 # Sensors
