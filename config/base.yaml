@@ -119,7 +119,7 @@ switch:
   # Heater relay
   - platform: gpio
     id: heater_out
-    pin: GPIO21
+    pin: GPIO20
     inverted: True
     internal: True # Hide from home assistant
 
