@@ -246,8 +246,8 @@ climate:
     default_preset: Startup
     preset:
       - name: Startup
-        mode: heat
+        mode: "OFF"
         default_target_temperature_low: 0°C
       - name: ABS
-        mode: heat
+        mode: "HEAT"
         default_target_temperature_low: 60°C
