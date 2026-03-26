@@ -127,6 +127,12 @@ switch:
     inverted: true
     internal: True # Hide from home assistant
 
+# 1-wire config
+one_wire:
+  - platform: gpio
+    pin: GPIO0
+    id: one_wire_input
+
 # Sensors
 sensor:
   # WiFi signal strength/RSSI in dB
@@ -173,6 +179,12 @@ sensor:
     lambda: |-
       return log(id(bme680_gas_resistance).state) + 0.04 * id(bme680_humidity).state;
     state_class: "measurement"
+  # DS18B20 temperature sensor
+  - platform: dallas_temp
+    #address: 0x1234567812345628
+    name: temperature
+    one_wire_id: one_wire_input
+    update_interval: 5s
 
 # Text sensors
 text_sensor:
