@@ -110,6 +110,7 @@ light:
     chipset: ws2812
     name: "RGB Indicator"
     id: indicator_light
+    internal: True
 
 # Switches
 switch:
@@ -238,8 +239,11 @@ climate:
           red: 0%
           green: 0%
           blue: 0%
-    default_preset: Chamber
+    #default_preset: PLA
     preset:
-      - name: Chamber
+      - name: PLA
         mode: heat
-        default_target_temperature_low: 20°C
+        default_target_temperature_low: 10°C
+      - name: ABS
+        mode: heat
+        default_target_temperature_low: 60°C
