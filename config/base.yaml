@@ -19,10 +19,6 @@ esphome:
     board_build.f_flash: 40000000L
     board_build.flash_mode: dio
     board_build.flash_size: 4MB
-#  on_boot:
-#    then:
-#      - script.execute: scr_sleep_control
-#      - script.wait: scr_sleep_control
 
 # ESP32 version and framework
 esp32:
@@ -124,7 +120,7 @@ switch:
   - platform: gpio
     id: heater_out
     pin: GPIO21
-    inverted: true
+    inverted: True
     internal: True # Hide from home assistant
 
 # 1-wire config
@@ -182,7 +178,8 @@ sensor:
   # DS18B20 temperature sensor
   - platform: dallas_temp
     #address: 0x1234567812345628
-    name: temperature
+    name: "Chamber Temperature"
+    id: ds18b20_temperature
     one_wire_id: one_wire_input
     update_interval: 5s
 
@@ -221,7 +218,7 @@ text_sensor:
 climate:
   - platform: thermostat
     name: "Temperature Controller"
-    sensor: bme680_temperature
+    sensor: ds18b20_temperature
     min_heating_off_time: 15s
     min_heating_run_time: 15s
     min_idle_time: 15s
