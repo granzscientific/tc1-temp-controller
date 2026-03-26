@@ -1,9 +1,9 @@
 substitutions:
-  name: gs-tc1
-  friendly_name: "GS TC1 Temperature Controller"
+  name: gs-tc1-temp-controller
+  friendly_name: "GS TC1 Temp Controller"
 
   # See https://esphome.io/components/esphome.html#esphome-creators-project
-  project_name: GranzScientific.TC1-Temperature-Controller
+  project_name: GranzScientific.TC1-Temp-Controller
   project_ver_num: "1.0"
   project_ver_let: a
 

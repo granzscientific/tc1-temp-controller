@@ -2,7 +2,7 @@ packages:
   granzscientific.bm1-base: !include base.yaml
 
 dashboard_import:
-  package_import_url: github://granzscientific/tc1-temperature-controller/gs-tc1-temperature-controller.yaml
+  package_import_url: github://granzscientific/tc1-temp-controller/gs-tc1-temp-controller.yaml
 
 esphome:
   name_add_mac_suffix: true
