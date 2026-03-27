@@ -243,11 +243,12 @@ climate:
           red: 0%
           green: 0%
           blue: 0%
-    default_preset: Startup
+    default_preset: "Off"
+    on_boot_restore_from: default_preset
     preset:
-      - name: Startup
+      - name: "Off"
         mode: "OFF"
         default_target_temperature_low: 0°C
-      - name: ABS
+      - name: "ABS"
         mode: "HEAT"
         default_target_temperature_low: 60°C
