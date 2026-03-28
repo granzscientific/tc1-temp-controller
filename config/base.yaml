@@ -243,10 +243,10 @@ climate:
           red: 0%
           green: 0%
           blue: 0%
-    default_preset: "Off"
+    default_preset: "Idle"
     on_boot_restore_from: default_preset
     preset:
-      - name: "Off"
+      - name: "Idle"
         mode: "OFF"
         default_target_temperature_low: 0°C
       - name: "ABS"
